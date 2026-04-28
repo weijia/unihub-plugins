@@ -15,6 +15,7 @@ interface DiskInfo {
   inodeFree?: number
   inodePercent?: number
   host?: string
+  serialNumber?: string
 }
 
 interface DiskData {
@@ -41,6 +42,7 @@ interface LogicalDisk {
   UsedSpaceGB: number
   UsagePercent: number
   DriveType: number
+  SerialNumber?: string
 }
 
 interface Host {
@@ -136,7 +138,8 @@ const loadDiskInfo = async () => {
           used: `${logicalDisk.UsedSpaceGB.toFixed(1)} GB`,
           available: `${logicalDisk.FreeSpaceGB.toFixed(1)} GB`,
           usePercent: Math.round(logicalDisk.UsagePercent),
-          host: host.host_info.hostname
+          host: host.host_info.hostname,
+          serialNumber: logicalDisk.SerialNumber
         })
       }
     }
@@ -336,6 +339,9 @@ onMounted(() => {
                       名称
                     </th>
                     <th class="py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      SN
+                    </th>
+                    <th class="py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       挂载点
                     </th>
                     <th class="py-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -366,6 +372,9 @@ onMounted(() => {
                     </td>
                     <td class="py-3 text-sm font-medium text-slate-900 dark:text-white">
                       {{ disk.name }}
+                    </td>
+                    <td class="py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
+                      {{ disk.serialNumber || '-' }}
                     </td>
                     <td class="py-3 font-mono text-sm text-slate-600 dark:text-slate-300">
                       {{ disk.mount }}
