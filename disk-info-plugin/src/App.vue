@@ -33,6 +33,28 @@ interface HostInfo {
   machine: string
 }
 
+interface PhysicalDisk {
+  DeviceID: string
+  Caption: string
+  Model: string
+  SerialNumber: string | null
+  SizeGB: number
+  InterfaceType: string
+  MediaType: string
+  Partitions: number
+  Status: string
+  FirmwareRevision: string
+}
+
+interface DiskPartitionMapping {
+  PhysicalDisk: string
+  PhysicalDiskModel: string
+  PhysicalDiskSerial: string | null
+  Partition: string
+  LogicalDisk: string
+  VolumeName: string
+}
+
 interface LogicalDisk {
   DeviceID: string
   VolumeName: string
@@ -42,13 +64,14 @@ interface LogicalDisk {
   UsedSpaceGB: number
   UsagePercent: number
   DriveType: number
-  SerialNumber?: string
 }
 
 interface Host {
   host_info: HostInfo
   collection_time: string
+  physical_disks: PhysicalDisk[]
   logical_disks: LogicalDisk[]
+  disk_partition_mappings: DiskPartitionMapping[]
   last_updated: string
 }
 
@@ -129,7 +152,15 @@ const loadDiskInfo = async () => {
 
     const disks: DiskInfo[] = []
     for (const host of rawData.hosts) {
+      const logicalDiskToSerialMap = new Map<string, string | null>()
+      if (host.disk_partition_mappings) {
+        for (const mapping of host.disk_partition_mappings) {
+          logicalDiskToSerialMap.set(mapping.LogicalDisk, mapping.PhysicalDiskSerial)
+        }
+      }
+
       for (const logicalDisk of host.logical_disks) {
+        const serialNumber = logicalDiskToSerialMap.get(logicalDisk.DeviceID) || undefined
         disks.push({
           name: logicalDisk.VolumeName || logicalDisk.DeviceID,
           mount: logicalDisk.DeviceID,
@@ -139,7 +170,7 @@ const loadDiskInfo = async () => {
           available: `${logicalDisk.FreeSpaceGB.toFixed(1)} GB`,
           usePercent: Math.round(logicalDisk.UsagePercent),
           host: host.host_info.hostname,
-          serialNumber: logicalDisk.SerialNumber
+          serialNumber: serialNumber || undefined
         })
       }
     }
